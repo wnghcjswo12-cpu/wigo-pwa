@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-title" content="WIGO" />
 <style>
   :root{
-    --lime:#7BD649; --lime-dark:#4FA52B; --sky:#3DA9FC; --coral:#FF6B5E; --gold:#FFC93C; --purple:#8B5CF6;
+    --lime:#7BD649; --lime-dark:#4FA52B; --sky:#3DA9FC; --coral:#FF6B5E; --gold:#FFC93C; --purple:#8B5CF6; --orange:#FF8A1E;
     --ink:#1C1F24; --slate:#5B6470; --cloud:#D6DBE1; --mist:#F4F6F8; --surface:#FFFFFF;
     --shadow:0 6px 20px rgba(28,31,36,.10);
   }
@@ -27,19 +27,19 @@
   .logo small{font-weight:700;font-size:10px;color:var(--slate);}
   .coins{background:#fff;border-radius:999px;padding:7px 13px;font-weight:800;font-size:14px;color:var(--gold);box-shadow:var(--shadow);}
   .coins b{color:var(--ink);}
+  .backbtn{border:none;background:none;color:var(--lime-dark);font-weight:800;font-size:15px;cursor:pointer;padding:6px 0;}
   h2.sec{font-size:17px;margin:18px 20px 10px;font-weight:800;}
   .card{background:var(--surface);border-radius:20px;box-shadow:var(--shadow);padding:18px;margin:0 20px 16px;}
   .muted{color:var(--slate);}
   .btn{border:none;border-radius:16px;padding:15px;font-size:15px;font-weight:800;cursor:pointer;width:100%;transition:transform .08s;}
-  .btn:active{transform:scale(.97);}
+  .btn:active{transform:scale(.97);} .btn:disabled{opacity:.6;}
   .btn-primary{background:var(--lime);color:#10330a;}
   .btn-ghost{background:#fff;color:var(--ink);box-shadow:var(--shadow);}
   .btn-sky{background:var(--sky);color:#fff;} .btn-coral{background:var(--coral);color:#fff;}
   .row{display:flex;gap:10px;}
   .chip{display:inline-flex;align-items:center;gap:5px;background:var(--mist);border-radius:999px;padding:6px 11px;font-size:12px;font-weight:700;color:var(--slate);}
   .chip.green{background:rgba(123,214,73,.18);color:var(--lime-dark);}
-  .chip.sky{background:rgba(61,169,252,.16);color:#1f74c0;}
-  .chip.gold{background:rgba(255,201,60,.22);color:#9a6b00;}
+  .chip.sky{background:rgba(61,169,252,.16);color:#1f74c0;} .chip.gold{background:rgba(255,201,60,.22);color:#9a6b00;}
   .lvlbar{margin:6px 20px 14px;background:linear-gradient(135deg,#8B5CF6,#3DA9FC);border-radius:22px;padding:16px 18px;color:#fff;box-shadow:0 10px 26px rgba(139,92,246,.3);}
   .lvlbar .top{display:flex;justify-content:space-between;margin-bottom:8px;font-weight:800;}
   .xpbar{height:9px;border-radius:999px;background:rgba(255,255,255,.28);overflow:hidden;}
@@ -50,13 +50,16 @@
   .roll-btn{background:#fff;color:var(--lime-dark);font-weight:900;border:none;border-radius:16px;padding:15px;width:100%;cursor:pointer;box-shadow:0 6px 16px rgba(0,0,0,.18);font-size:16px;}
   .roll-btn:active{transform:scale(.97);}
   .stats{display:flex;gap:10px;margin:0 20px 8px;}
-  .stat{flex:1;background:#fff;border-radius:18px;padding:13px 8px;text-align:center;box-shadow:var(--shadow);}
+  .stat{flex:1;background:#fff;border-radius:18px;padding:13px 8px;text-align:center;box-shadow:var(--shadow);border:none;cursor:default;}
+  .stat.tap{cursor:pointer;position:relative;}
+  .stat.tap:active{transform:scale(.97);}
+  .stat.tap::after{content:'›';position:absolute;top:8px;right:10px;color:var(--cloud);font-weight:900;}
   .stat .v{font-size:19px;font-weight:900;} .stat .l{font-size:11px;color:var(--slate);margin-top:2px;font-weight:600;}
   .stat .v.fire{color:var(--coral);} .stat .v.sky{color:var(--sky);} .stat .v.gold{color:#caa000;}
   .mtitle{font-size:19px;font-weight:900;margin:8px 0 6px;line-height:1.25;}
   .mdesc{font-size:14px;color:var(--slate);line-height:1.5;}
-  .mmeta{display:flex;flex-wrap:wrap;gap:8px;margin-top:13px;}
   .quest{background:#fff;border-radius:18px;box-shadow:var(--shadow);margin:0 20px 12px;padding:15px 16px;}
+  .quest.locked{opacity:.7;}
   .quest .qh{display:flex;justify-content:space-between;align-items:center;gap:8px;}
   .qbar{height:8px;border-radius:999px;background:var(--mist);overflow:hidden;margin:10px 0 6px;}
   .qbar>i{display:block;height:100%;background:var(--lime);}
@@ -73,6 +76,27 @@
   .seg{display:flex;background:var(--mist);border-radius:14px;padding:4px;margin:0 20px 14px;}
   .seg button{flex:1;border:none;background:none;padding:9px;border-radius:11px;font-weight:800;font-size:13px;color:var(--slate);cursor:pointer;}
   .seg button.on{background:#fff;color:var(--ink);box-shadow:var(--shadow);}
+  /* 달력 */
+  .calhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+  .navmo{border:none;background:var(--mist);width:34px;height:34px;border-radius:10px;font-size:18px;font-weight:900;color:var(--slate);cursor:pointer;}
+  .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+  .cal .wd{text-align:center;font-size:11px;color:var(--slate);font-weight:700;padding-bottom:4px;}
+  .cal .day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;border-radius:50%;color:var(--ink);}
+  .cal .day.att{background:var(--orange);color:#fff;box-shadow:0 2px 6px rgba(255,138,30,.45);}
+  .cal .day.today{box-shadow:inset 0 0 0 2px var(--lime);}
+  .cal .day.att.today{box-shadow:inset 0 0 0 2px var(--lime),0 2px 6px rgba(255,138,30,.45);}
+  .cal .day.empty{visibility:hidden;}
+  .legend{display:flex;align-items:center;gap:8px;margin-top:14px;font-size:12px;color:var(--slate);}
+  .legend .dot-att{width:18px;height:18px;border-radius:50%;background:var(--orange);}
+  /* 카메라 */
+  .cam{position:fixed;inset:0;background:#000;z-index:70;display:none;flex-direction:column;}
+  .cam.show{display:flex;}
+  .cam video{flex:1;width:100%;object-fit:cover;background:#000;}
+  .cam .guide{position:absolute;top:0;left:0;right:0;padding:max(16px,env(safe-area-inset-top)) 16px 0;color:#fff;text-align:center;font-weight:700;font-size:14px;text-shadow:0 1px 3px rgba(0,0,0,.6);}
+  .cam .bar{padding:16px 16px calc(20px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px;align-items:center;background:#000;color:#fff;}
+  .cam #camStatus{font-size:13px;min-height:18px;text-align:center;}
+  .cam .shoot{width:70px;height:70px;border-radius:50%;background:#fff;border:5px solid #b9b9b9;cursor:pointer;}
+  .cam .shoot:active{transform:scale(.92);}
   .nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;height:calc(72px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:rgba(255,255,255,.97);backdrop-filter:blur(8px);border-top:1px solid var(--cloud);display:flex;justify-content:space-around;align-items:center;}
   .nav button{border:none;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:700;color:var(--slate);cursor:pointer;flex:1;height:100%;}
   .nav button .ic{font-size:20px;} .nav button.active{color:var(--lime-dark);}
@@ -81,10 +105,8 @@
   .sheet{background:#fff;width:100%;max-width:480px;margin:0 auto;border-radius:26px 26px 0 0;padding:24px 22px calc(30px + env(safe-area-inset-bottom));animation:up .25s ease;max-height:90%;overflow-y:auto;}
   @keyframes up{from{transform:translateY(100%);}to{transform:translateY(0);}}
   .sheet h3{margin:0 0 6px;font-size:18px;font-weight:900;}
-  .reward{text-align:center;}
-  .reward .big{font-size:56px;margin:6px 0;}
-  .reward .line{font-size:16px;font-weight:800;margin:7px 0;}
-  .toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:999px;font-size:13px;font-weight:700;opacity:0;transition:opacity .25s;z-index:50;white-space:nowrap;max-width:90%;}
+  .reward{text-align:center;} .reward .big{font-size:56px;margin:6px 0;} .reward .line{font-size:16px;font-weight:800;margin:7px 0;}
+  .toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:999px;font-size:13px;font-weight:700;opacity:0;transition:opacity .25s;z-index:80;white-space:nowrap;max-width:90%;}
   .toast.show{opacity:1;}
   .splash{position:fixed;inset:0;background:linear-gradient(135deg,#7BD649,#4FA52B);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;z-index:60;gap:14px;}
   .splash .mark{font-size:44px;font-weight:900;letter-spacing:1px;}
@@ -104,6 +126,16 @@
     <button data-tab="profile"><span class="ic">👤</span>프로필</button>
   </nav>
   <div class="overlay" id="overlay"><div class="sheet" id="sheet"></div></div>
+  <!-- 카메라 인증 (사진첩 불가, 실시간 카메라만) -->
+  <div class="cam" id="cam">
+    <div class="guide" id="camGuide">대상을 화면에 담고 촬영하세요</div>
+    <video id="camVideo" autoplay playsinline muted></video>
+    <div class="bar">
+      <div id="camStatus"></div>
+      <div class="shoot" id="shootBtn"></div>
+      <button class="btn btn-ghost" id="camClose" style="max-width:200px">닫기</button>
+    </div>
+  </div>
   <div class="toast" id="toast"></div>
   <div class="splash" id="splash"><div class="mark">WIGO ◍</div><div class="spinner"></div><div style="opacity:.9;font-size:13px">모험을 준비하는 중...</div></div>
 </div>
@@ -122,27 +154,64 @@ const TYPE_EMOJI = { distance:'🚶', visit:'📍', observe:'👀' };
 const TYPE_LABEL = { distance:'거리', visit:'방문', observe:'관찰' };
 const DIFF_LABEL = { EASY:'쉬움', NORMAL:'보통', HARD:'어려움' };
 
-let S = { profile:null, tab:'home', rankScope:'friends', freeRerolls:2, pending:null, deferredPrompt:null };
+let S = { profile:null, tab:'home', rankScope:'friends', freeRerolls:2, pending:null, deferredPrompt:null,
+          attendance:new Set(), streak:0, calMonth:0 };
 const $ = id => document.getElementById(id);
 const screen = $('screen');
 const xpForLevel = L => Math.round(80 * Math.pow(Math.max(L,1), 1.5));
-function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2000); }
+const ymd = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2200); }
 function openSheet(h){ $('sheet').innerHTML=h; $('overlay').classList.add('show'); }
 function closeSheet(){ $('overlay').classList.remove('show'); }
 $('overlay').addEventListener('click', e => { if(e.target.id==='overlay') closeSheet(); });
 
-// ---------- 부팅: 익명 로그인 + 프로필 ----------
+// ====== 범용 사진 검증 프로그램 (WigoVerifier) ======
+// 캔버스 픽셀 분석으로 (1)가림/빈화면/저대비 차단, (2)미션 대상 색감 일치 휴리스틱.
+const WigoVerifier = {
+  analyze(canvas){
+    const ctx=canvas.getContext('2d'); const w=canvas.width, h=canvas.height;
+    const d=ctx.getImageData(0,0,w,h).data;
+    let r=0,g=0,b=0,n=0; const lums=[];
+    const step=4*Math.max(1, Math.floor((w*h)/20000));
+    for(let i=0;i<d.length;i+=step){ r+=d[i]; g+=d[i+1]; b+=d[i+2]; n++; lums.push(0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]); }
+    r/=n; g/=n; b/=n;
+    const mean=lums.reduce((a,c)=>a+c,0)/lums.length;
+    const variance=lums.reduce((a,c)=>a+(c-mean)*(c-mean),0)/lums.length;
+    return { r,g,b, mean, contrast:Math.sqrt(variance) };
+  },
+  verify(meta, canvas){
+    const a=this.analyze(canvas);
+    const lit = a.mean>22 && a.mean<242;          // 너무 어둡/밝음(가림) 차단
+    const hasContent = a.contrast>13;              // 단색/빈화면 차단
+    const warm = a.r > a.b + 12;
+    const red  = a.r > a.g + 16 && a.r > a.b + 16;
+    const colorful = a.contrast > 28;
+    const obj = (meta && meta.object) || '';
+    let matched=true, hint='';
+    if(obj==='red_sign'){ matched = red || a.r>a.g+8; hint='빨간색 대상'; }
+    else if(obj==='sunset'){ matched = warm; hint='노을빛'; }
+    else if(obj==='flower' || obj==='mural'){ matched = colorful; hint='또렷한 색감'; }
+    else { matched = hasContent; hint='피사체'; }
+    let score = 0.45*Math.min(1,a.contrast/45) + 0.2*(lit?1:0) + 0.35*(matched?1:0);
+    const pass = lit && hasContent && matched;
+    const reason = !lit ? '화면이 가려졌거나 너무 어두워요'
+      : !hasContent ? '피사체가 또렷하지 않아요'
+      : !matched ? `${hint}을(를) 찾지 못했어요`
+      : '일치 확인';
+    return { pass, score: Math.round(Math.min(1,score)*100), reason };
+  }
+};
+
+// ====== 부팅 ======
 async function boot(){
   try {
     let { data:{ session } } = await sb.auth.getSession();
-    if(!session){
-      const { error } = await sb.auth.signInAnonymously();
-      if(error) throw error;
-    }
+    if(!session){ const { error } = await sb.auth.signInAnonymously(); if(error) throw error; }
     await loadProfile();
+    await computeAttendance();
     $('splash').style.display='none';
+    setupNav(); wireCamera();
     render();
-    setupNav();
   } catch(e){
     $('splash').innerHTML = '<div style="padding:24px;text-align:center"><div class="mark">WIGO</div><p>로그인에 실패했어요.<br>대시보드에서 <b>Anonymous sign-ins</b>가 켜져 있는지 확인해주세요.</p><pre style="font-size:11px;opacity:.8">'+ (e.message||e) +'</pre></div>';
   }
@@ -150,37 +219,45 @@ async function boot(){
 async function loadProfile(){
   const uid = (await sb.auth.getUser()).data.user.id;
   let { data } = await sb.from('profiles').select('*').eq('id', uid).maybeSingle();
-  if(!data){ // 트리거 지연 대비 재시도
-    await new Promise(r=>setTimeout(r,800));
-    ({ data } = await sb.from('profiles').select('*').eq('id', uid).maybeSingle());
-  }
+  if(!data){ await new Promise(r=>setTimeout(r,800)); ({ data } = await sb.from('profiles').select('*').eq('id', uid).maybeSingle()); }
   S.profile = data || { id:uid, nickname:'walker', level:1, xp:0, coins:0, total_distance_m:0, total_missions:0, current_streak:0 };
 }
 
-// ---------- 위치 ----------
-function getPos(){
-  return new Promise((resolve)=>{
-    if(!navigator.geolocation) return resolve({lat:37.5665,lng:126.9780});
-    navigator.geolocation.getCurrentPosition(
-      p=>resolve({lat:p.coords.latitude,lng:p.coords.longitude}),
-      ()=>{ toast('위치 권한이 없어 기본 위치(서울)로 진행해요'); resolve({lat:37.5665,lng:126.9780}); },
-      { enableHighAccuracy:true, timeout:8000 }
-    );
-  });
+// ====== 출석 (완료 미션 날짜 + 기기 저장 체크인 병합) ======
+function localKey(){ return 'wigo_attend_'+(S.profile?S.profile.id:'x'); }
+function localAttend(){ try{ return new Set(JSON.parse(localStorage.getItem(localKey())||'[]')); }catch{ return new Set(); } }
+function saveLocalAttend(set){ localStorage.setItem(localKey(), JSON.stringify([...set])); }
+async function computeAttendance(){
+  const uid=S.profile.id;
+  const { data } = await sb.from('user_missions').select('completed_at').eq('user_id',uid).eq('status','completed').not('completed_at','is',null);
+  const set = localAttend();
+  (data||[]).forEach(r=>{ if(r.completed_at) set.add(r.completed_at.slice(0,10)); });
+  S.attendance = set;
+  // 연속 출석: 오늘(없으면 어제)부터 거꾸로 연속 카운트
+  let streak=0; const d=new Date();
+  if(!set.has(ymd(d))) d.setDate(d.getDate()-1);
+  while(set.has(ymd(d))){ streak++; d.setDate(d.getDate()-1); }
+  S.streak=streak;
 }
+function checkInToday(){
+  const set=localAttend(); const t=ymd(new Date());
+  if(set.has(t)) return false;
+  set.add(t); saveLocalAttend(set); S.attendance.add(t); computeStreakLocal(); return true;
+}
+function computeStreakLocal(){ let s=0; const d=new Date(); if(!S.attendance.has(ymd(d))) d.setDate(d.getDate()-1); while(S.attendance.has(ymd(d))){ s++; d.setDate(d.getDate()-1);} S.streak=s; }
 
-// ---------- 네비 ----------
-function setupNav(){
-  document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{ S.tab=b.dataset.tab; document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('active',x===b)); screen.scrollTop=0; render(); });
-}
+// ====== 네비 ======
+function setupNav(){ document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{ S.tab=b.dataset.tab; navActive(b.dataset.tab); screen.scrollTop=0; render(); }); }
+function navActive(tab){ document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('active', x.dataset.tab===tab)); }
 function render(){
   if(S.tab==='home') return renderHome();
   if(S.tab==='quests') return renderQuests();
   if(S.tab==='rank') return renderRank();
   if(S.tab==='profile') return renderProfile();
+  if(S.tab==='attendance') return renderAttendance();
 }
 
-// ---------- 홈 ----------
+// ====== 홈 ======
 function renderHome(){
   const p=S.profile, need=xpForLevel(p.level), pct=Math.min(Math.round(p.xp/need*100),100);
   screen.innerHTML = `
@@ -190,13 +267,13 @@ function renderHome(){
   <div class="hero"><div class="blob"></div><h1>오늘의 모험을 시작할까요?</h1><p>버튼을 누르면 위치 기반 랜덤 미션이 생성돼요.</p>
     <button class="roll-btn" id="rollBtn">🎲 미션 받기</button></div>
   <div class="stats">
-    <div class="stat"><div class="v fire">${p.current_streak}🔥</div><div class="l">연속 산책</div></div>
+    <button class="stat tap" id="streakStat"><div class="v fire">${S.streak}🔥</div><div class="l">연속 산책</div></button>
     <div class="stat"><div class="v sky">${(p.total_distance_m/1000).toFixed(1)}km</div><div class="l">누적 거리</div></div>
     <div class="stat"><div class="v gold">${p.total_missions}</div><div class="l">완료 미션</div></div>
   </div>
   <h2 class="sec">진행 중 미션</h2><div id="activeWrap"><div class="card muted" style="text-align:center">불러오는 중...</div></div>`;
   $('rollBtn').onclick = roll;
-  // 설치 버튼
+  $('streakStat').onclick = ()=>{ S.tab='attendance'; S.calMonth=0; navActive('home'); render(); };
   if(S.deferredPrompt){ $('installBar').classList.add('show'); $('installBtn').onclick = doInstall; }
   loadActive();
 }
@@ -205,14 +282,20 @@ async function loadActive(){
   const { data } = await sb.from('user_missions').select('*, mission_templates(*)').eq('user_id',uid).in('status',['accepted','in_progress']).order('started_at',{ascending:false});
   const wrap=$('activeWrap'); if(!wrap) return;
   if(!data || !data.length){ wrap.innerHTML=`<div class="card muted" style="text-align:center">진행 중인 미션이 없어요.<br>위에서 미션을 받아보세요! 🎲</div>`; return; }
-  wrap.innerHTML = data.map(m=>{ const t=m.mission_templates||{}; return `<div class="card" style="border:2px solid var(--lime)">
+  wrap.innerHTML = data.map((m,idx)=>{ const t=m.mission_templates||{}; const meta=JSON.stringify(t.target_meta||{}).replace(/"/g,'&quot;'); const obs=t.type==='observe';
+    return `<div class="card" style="border:2px solid var(--lime)">
     <div style="font-weight:800;color:var(--lime-dark);font-size:12px">${TYPE_EMOJI[t.type]||''} ${TYPE_LABEL[t.type]||''}</div>
     <div class="mtitle" style="font-size:17px">${t.title||'미션'}</div><div class="mdesc">${t.description||''}</div>
-    <div class="row" style="margin-top:10px"><button class="btn btn-primary" data-id="${m.id}" data-type="${t.type}" data-target="${t.target_value||0}">✅ 완료하기</button></div></div>`; }).join('');
-  wrap.querySelectorAll('button[data-id]').forEach(b=> b.onclick=()=> completeMission(b.dataset.id, b.dataset.type, Number(b.dataset.target)));
+    <div class="row" style="margin-top:10px"><button class="btn btn-primary" data-i="${idx}" data-id="${m.id}" data-type="${t.type}" data-target="${t.target_value||0}" data-meta="${meta}">${obs?'📸 사진 찍어 완료':'✅ 완료하기'}</button></div></div>`; }).join('');
+  wrap.querySelectorAll('button[data-id]').forEach(b=> b.onclick=()=>{
+    const id=b.dataset.id, type=b.dataset.type, target=Number(b.dataset.target);
+    let meta={}; try{ meta=JSON.parse(b.dataset.meta); }catch(e){}
+    if(type==='observe') startObserve(id, target, meta);
+    else completeMission(id, type, target);
+  });
 }
 
-// ---------- 미션 받기 ----------
+// ====== 미션 받기 ======
 async function roll(){
   const btn=$('rollBtn'); if(btn){ btn.disabled=true; btn.textContent='🎲 미션 생성 중...'; }
   try{
@@ -224,33 +307,68 @@ async function roll(){
   }catch(e){ toast('오류: '+(e.message||e)); }
   finally{ if(btn){ btn.disabled=false; btn.textContent='🎲 미션 받기'; } }
 }
+function getPos(){
+  return new Promise((resolve)=>{
+    if(!navigator.geolocation) return resolve({lat:37.5665,lng:126.9780});
+    navigator.geolocation.getCurrentPosition(p=>resolve({lat:p.coords.latitude,lng:p.coords.longitude}),
+      ()=>{ toast('위치 권한이 없어 기본 위치(서울)로 진행해요'); resolve({lat:37.5665,lng:126.9780}); },
+      { enableHighAccuracy:true, timeout:8000 });
+  });
+}
 function showPreview(d){
   const t=d.template;
   openSheet(`<div class="row" style="justify-content:space-between"><span class="chip green">${TYPE_EMOJI[t.type]} ${TYPE_LABEL[t.type]}</span><span class="chip ${t.difficulty==='HARD'?'gold':t.difficulty==='EASY'?'green':'sky'}">⚡ ${DIFF_LABEL[t.difficulty]}</span></div>
     <div class="mtitle">${t.title}</div><div class="mdesc">${t.description}</div>
+    ${t.type==='observe'?'<div class="chip sky" style="margin-top:10px">📸 카메라로 사진 인증 필요</div>':''}
     <div class="card" style="margin:16px 0 6px;background:var(--mist);box-shadow:none">완료 보상 &nbsp; ✨ +${t.xp_reward} XP &nbsp; 🪙 +${t.coin_reward}</div>
     <button class="btn btn-primary" id="acceptBtn">⚔️ 미션 수락</button>
     <button class="btn btn-ghost" id="rerollBtn" style="margin-top:10px">🎲 다시 받기 (무료 ${S.freeRerolls}회)</button>`);
   $('acceptBtn').onclick=()=>{ closeSheet(); S.tab='home'; render(); toast('미션 수락! 산책을 시작해요 🚶'); };
   $('rerollBtn').onclick=async ()=>{
     if(S.freeRerolls<=0){ toast('무료 다시받기를 모두 썼어요 (광고는 앱 버전에서)'); return; }
-    S.freeRerolls--;
-    await sb.from('user_missions').update({status:'abandoned'}).eq('id', d.user_mission.id);
+    S.freeRerolls--; await sb.from('user_missions').update({status:'abandoned'}).eq('id', d.user_mission.id);
     closeSheet(); roll();
   };
 }
 
-// ---------- 완료 + 보상 ----------
-async function completeMission(id, type, target){
+// ====== 카메라 인증 (관찰형) ======
+let camStream=null, camCtx={};
+function wireCamera(){ $('shootBtn').onclick=shoot; $('camClose').onclick=closeCam; }
+async function startObserve(missionId, target, meta){
+  camCtx={ missionId, target, meta };
+  $('camStatus').textContent=''; $('camGuide').textContent='대상을 화면에 담고 촬영하세요';
+  $('cam').classList.add('show');
+  try{
+    camStream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:{ ideal:'environment' } }, audio:false });
+    $('camVideo').srcObject = camStream;
+  }catch(e){
+    closeCam();
+    toast('카메라 권한이 필요해요. 설정에서 허용해주세요.');
+  }
+}
+function closeCam(){ $('cam').classList.remove('show'); if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream=null; } }
+async function shoot(){
+  const v=$('camVideo'); if(!v.videoWidth){ toast('카메라 준비 중...'); return; }
+  const c=document.createElement('canvas'); c.width=v.videoWidth; c.height=v.videoHeight;
+  c.getContext('2d').drawImage(v,0,0,c.width,c.height);
+  const res=WigoVerifier.verify(camCtx.meta, c);
+  $('camStatus').textContent = res.pass ? `✅ 검증 통과 · 일치도 ${res.score}%` : `❌ ${res.reason} (일치도 ${res.score}%) · 다시 촬영`;
+  if(res.pass){
+    setTimeout(async ()=>{ closeCam(); await completeMission(camCtx.missionId, 'observe', 0, 'verified://'+res.score); }, 700);
+  }
+}
+
+// ====== 완료 + 보상 ======
+async function completeMission(id, type, target, proofUrl){
   try{
     const pos=await getPos();
     const body={ user_mission_id:id, lat:pos.lat, lng:pos.lng };
-    if(type==='distance') body.distance_m = target;       // 웹 데모: 목표 거리 충족 처리
-    if(type==='observe') body.proof_url = 'honor://web-demo';
+    if(type==='distance') body.distance_m = target;          // 웹 데모: 목표거리 충족 처리
+    if(type==='observe') body.proof_url = proofUrl || 'verified://0';
     const { data, error } = await sb.functions.invoke('complete-mission',{ body });
     if(error) throw error;
     if(!data || data.success!==true){ toast(errMsg(data&&data.error, data&&data.distance_to_target_m)); return; }
-    await loadProfile();
+    await loadProfile(); await computeAttendance();   // 완료일 → 출석 반영
     showReward(data);
   }catch(e){ toast('오류: '+(e.message||e)); }
 }
@@ -264,19 +382,17 @@ function showReward(d){
   $('rewardOk').onclick=()=>{ closeSheet(); S.tab='home'; render(); };
 }
 
-// ---------- 퀘스트 ----------
+// ====== 퀘스트 ======
 async function renderQuests(){
-  screen.innerHTML=`<div class="topbar"><div class="logo"><span class="dot"></span>퀘스트</div><div class="coins">🪙 <b>${S.profile.coins}</b></div></div>
-    <div id="qd"></div>`;
+  screen.innerHTML=`<div class="topbar"><div class="logo"><span class="dot"></span>퀘스트</div><div class="coins">🪙 <b>${S.profile.coins}</b></div></div><div id="qd"></div>`;
   const wrap=$('qd');
-  for(const period of ['daily','weekly']){
-    try{ await sb.functions.invoke('issue-quests',{ body:{ period } }); }catch(e){}
-  }
+  for(const period of ['daily','weekly']){ try{ await sb.functions.invoke('issue-quests',{ body:{ period } }); }catch(e){} }
   const uid=S.profile.id;
   const { data } = await sb.from('quests').select('*').eq('user_id',uid).gt('expires_at', new Date().toISOString()).order('period');
   if(!wrap) return;
   const daily=(data||[]).filter(q=>q.period==='daily'), weekly=(data||[]).filter(q=>q.period==='weekly');
-  wrap.innerHTML = `<h2 class="sec">📅 데일리</h2>${daily.map(questCard).join('')||emptyQ()}<h2 class="sec">🗓️ 위클리</h2>${weekly.map(questCard).join('')||emptyQ()}`;
+  wrap.innerHTML = `<h2 class="sec">📅 데일리 <span class="muted" style="font-size:12px;font-weight:600">· 하루 1회</span></h2>${daily.map(questCard).join('')||emptyQ()}
+                    <h2 class="sec">🗓️ 위클리 <span class="muted" style="font-size:12px;font-weight:600">· 주 1회</span></h2>${weekly.map(questCard).join('')||emptyQ()}`;
   wrap.querySelectorAll('button[data-q]').forEach(b=> b.onclick=()=>claim(b.dataset.q));
 }
 function emptyQ(){ return `<div class="card muted" style="text-align:center">퀘스트가 없어요</div>`; }
@@ -286,10 +402,10 @@ function questCard(q){
   const title = q.goal_type==='complete_missions'?`미션 ${q.goal_value}개 완료`:(q.goal_type==='walk_distance'?`${(q.goal_value/1000).toFixed(0)}km 걷기`:q.goal_type);
   const fmt=v=> q.goal_type==='walk_distance' ? (v>=1000?(v/1000).toFixed(1)+'km':v+'m') : v;
   let tail;
-  if(q.claimed) tail=`<span class="chip green">수령 완료 ✓</span>`;
+  if(q.claimed) tail=`<span class="chip green">✅ 보상 완료</span>`;            // 수령 후: 보상 완료 + 잠금
   else if(done) tail=`<button class="btn-sm btn-primary" data-q="${q.id}">보상 받기</button>`;
   else tail=`<span class="chip">진행 중</span>`;
-  return `<div class="quest"><div class="qh"><div style="font-weight:800">${title}</div><div style="font-size:12px;font-weight:800;color:var(--lime-dark)">✨${q.xp_reward} 🪙${q.coin_reward}</div></div>
+  return `<div class="quest ${q.claimed?'locked':''}"><div class="qh"><div style="font-weight:800">${title}</div><div style="font-size:12px;font-weight:800;color:var(--lime-dark)">✨${q.xp_reward} 🪙${q.coin_reward}</div></div>
     <div class="qbar"><i style="width:${pct}%"></i></div>
     <div class="qfoot"><span>${fmt(q.progress)} / ${fmt(q.goal_value)}</span>${tail}</div></div>`;
 }
@@ -298,31 +414,59 @@ async function claim(qid){
     const { data, error } = await sb.functions.invoke('claim-quest',{ body:{ quest_id:qid } });
     if(error) throw error;
     if(!data || data.success!==true){ toast('아직 수령할 수 없어요'); return; }
-    await loadProfile();
-    toast(`보상 수령! ✨${data.rewards.xp} 🪙${data.rewards.coins}`);
-    renderQuests();
+    await loadProfile();                                  // 리워드 적립 반영
+    toast(`보상 적립! ✨${data.rewards.xp} 🪙${data.rewards.coins}`);
+    renderQuests();                                       // 상태를 '보상 완료'로 갱신
   }catch(e){ toast('오류: '+(e.message||e)); }
 }
 
-// ---------- 랭킹 ----------
+// ====== 출석체크 (달력) ======
+function renderAttendance(){
+  const base=new Date(); base.setDate(1); base.setMonth(base.getMonth()+S.calMonth);
+  const y=base.getFullYear(), m=base.getMonth();
+  const firstDow=new Date(y,m,1).getDay(); const days=new Date(y,m+1,0).getDate();
+  const today=new Date(); const todayStr=ymd(today);
+  let cells=''; for(let i=0;i<firstDow;i++) cells+='<div class="day empty"></div>';
+  let monthCount=0;
+  for(let dn=1;dn<=days;dn++){ const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(dn).padStart(2,'0')}`;
+    const att=S.attendance.has(ds); if(att) monthCount++;
+    cells+=`<div class="day ${att?'att':''} ${ds===todayStr?'today':''}">${dn}</div>`; }
+  const todayAtt=S.attendance.has(todayStr);
+  screen.innerHTML=`
+    <div class="topbar"><button class="backbtn" id="attBack">‹ 뒤로</button><div class="logo" style="font-size:17px">출석체크</div><div style="width:54px"></div></div>
+    <div class="lvlbar"><div class="top"><span>🔥 ${S.streak}일 연속 출석</span><span>이번 화면 ${monthCount}일</span></div></div>
+    <div class="card">
+      <div class="calhead"><button class="navmo" id="prevMo">‹</button><div style="font-weight:800">${y}년 ${m+1}월</div><button class="navmo" id="nextMo">›</button></div>
+      <div class="cal">${['일','월','화','수','목','금','토'].map(w=>`<div class="wd">${w}</div>`).join('')}${cells}</div>
+      <div class="legend"><span class="dot-att"></span> 출석한 날 (주황 원)</div>
+    </div>
+    <div style="padding:0 20px">
+      <button class="btn ${todayAtt?'btn-ghost':'btn-primary'}" id="checkBtn" ${todayAtt?'disabled':''}>${todayAtt?'오늘 출석 완료 ✓':'오늘 출석하기'}</button>
+      <div class="muted" style="font-size:12px;text-align:center;margin-top:8px">미션을 완료한 날도 자동으로 출석 처리돼요</div>
+    </div>`;
+  $('attBack').onclick=()=>{ S.tab='home'; render(); };
+  $('prevMo').onclick=()=>{ S.calMonth--; renderAttendance(); };
+  $('nextMo').onclick=()=>{ S.calMonth++; renderAttendance(); };
+  $('checkBtn').onclick=()=>{ if(checkInToday()){ toast('오늘 출석 완료! 🔥'); renderAttendance(); } };
+}
+
+// ====== 랭킹 ======
 function seasonWeek(){ const n=new Date(); const d=Math.ceil((((n-new Date(n.getFullYear(),0,1))/86400000)+1)/7); return `${n.getFullYear()}-W${String(d).padStart(2,'0')}`; }
 async function renderRank(){
   screen.innerHTML=`<div class="topbar"><div class="logo"><span class="dot"></span>랭킹</div><div class="coins">🪙 <b>${S.profile.coins}</b></div></div>
     <div class="seg"><button class="${S.rankScope==='friends'?'on':''}" id="sf">친구</button><button class="${S.rankScope==='all'?'on':''}" id="sa">전체</button></div>
     <div style="text-align:center;font-size:12px;color:var(--slate);margin-bottom:8px">🏆 이번 주 시즌 · 주간 XP 기준</div><div id="rk"></div>`;
-  $('sf').onclick=()=>{ S.rankScope='friends'; renderRank(); };
-  $('sa').onclick=()=>{ S.rankScope='all'; renderRank(); };
+  $('sf').onclick=()=>{ S.rankScope='friends'; renderRank(); }; $('sa').onclick=()=>{ S.rankScope='all'; renderRank(); };
   const { data } = await sb.from('leaderboard_public').select('*').eq('season_week', seasonWeek()).order('rank',{ascending:true}).limit(50);
   const rk=$('rk'); if(!rk) return;
-  let list=data||[];
-  if(S.rankScope==='friends') list=list.filter(e=>e.user_id===S.profile.id); // 친구 데이터 없으면 본인만
+  let list=data||[]; if(S.rankScope==='friends') list=list.filter(e=>e.user_id===S.profile.id);
   if(!list.length){ rk.innerHTML=`<div class="card muted" style="text-align:center">아직 이번 주 랭킹 기록이 없어요.<br>미션을 완료하면 등록돼요!</div>`; return; }
   rk.innerHTML=list.map(e=>`<div class="rank-row ${e.user_id===S.profile.id?'me':''}"><div class="rank-no ${e.rank<=3?'top':''}">${['🥇','🥈','🥉'][e.rank-1]||e.rank}</div>
     <div class="ava">${(e.nickname||'?')[0]}</div><div style="font-weight:800">${e.nickname||'익명'} <span class="chip" style="font-size:10px">Lv.${e.level}</span></div>
     <div class="rank-val">${e.weekly_xp} XP</div></div>`).join('');
 }
 
-// ---------- 프로필 ----------
+// ====== 프로필 ======
 async function renderProfile(){
   const p=S.profile, need=xpForLevel(p.level), pct=Math.min(Math.round(p.xp/need*100),100);
   screen.innerHTML=`<div class="topbar"><div class="logo"><span class="dot"></span>프로필</div><div class="coins">🪙 <b>${p.coins}</b></div></div>
@@ -331,7 +475,7 @@ async function renderProfile(){
       <div class="chip green" style="margin-top:6px">⭐ Lv.${p.level} · 동네 탐험가</div>
       <div class="xpbar" style="background:var(--mist);margin:12px 20px 4px"><i style="width:${pct}%;background:var(--lime)"></i></div>
       <div class="muted" style="font-size:12px">다음 레벨까지 ${need-p.xp} XP</div></div>
-    <div class="stats"><div class="stat"><div class="v fire">${p.current_streak}🔥</div><div class="l">연속 산책</div></div>
+    <div class="stats"><div class="stat"><div class="v fire">${S.streak}🔥</div><div class="l">연속 출석</div></div>
       <div class="stat"><div class="v sky">${(p.total_distance_m/1000).toFixed(1)}km</div><div class="l">누적 거리</div></div>
       <div class="stat"><div class="v gold">${p.total_missions}</div><div class="l">완료 미션</div></div></div>
     <h2 class="sec">획득 뱃지 🏅</h2><div class="grid" id="badges"><div class="muted">불러오는 중...</div></div>
@@ -351,7 +495,7 @@ function errMsg(code, dist){
   return m[code]||('오류'+(code?' ('+code+')':''));
 }
 
-// ---------- PWA: 서비스워커 + 설치 ----------
+// ====== PWA ======
 if('serviceWorker' in navigator){ window.addEventListener('load',()=> navigator.serviceWorker.register('./sw.js').catch(()=>{})); }
 window.addEventListener('beforeinstallprompt',(e)=>{ e.preventDefault(); S.deferredPrompt=e; const bar=$('installBar'); if(bar){ bar.classList.add('show'); const btn=$('installBtn'); if(btn) btn.onclick=doInstall; } });
 async function doInstall(){ if(!S.deferredPrompt) return; S.deferredPrompt.prompt(); await S.deferredPrompt.userChoice; S.deferredPrompt=null; const bar=$('installBar'); if(bar) bar.classList.remove('show'); }
