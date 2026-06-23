@@ -1,5 +1,5 @@
 // WIGO PWA 서비스 워커 — 앱 셸 캐시(오프라인 기동) + 네트워크 우선(API)
-const CACHE = 'wigo-v2';
+const CACHE = 'wigo-v3';
 const SHELL = [
   './',
   './index.html',
