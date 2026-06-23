@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>WIGO — Walk Your Adventure</title>
+<meta name="theme-color" content="#7BD649" />
+<link rel="manifest" href="./manifest.webmanifest" />
+<link rel="icon" href="./icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="./icon.svg" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="WIGO" />
+<style>
+  :root{
+    --lime:#7BD649; --lime-dark:#4FA52B; --sky:#3DA9FC; --coral:#FF6B5E; --gold:#FFC93C; --purple:#8B5CF6;
+    --ink:#1C1F24; --slate:#5B6470; --cloud:#D6DBE1; --mist:#F4F6F8; --surface:#FFFFFF;
+    --shadow:0 6px 20px rgba(28,31,36,.10);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;background:var(--mist);color:var(--ink);}
+  #app{max-width:480px;margin:0 auto;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;background:var(--mist);position:relative;}
+  .screen{flex:1;overflow-y:auto;padding:0 0 88px;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:max(14px,env(safe-area-inset-top)) 20px 10px;}
+  .logo{font-weight:900;font-size:21px;color:var(--lime-dark);display:flex;align-items:center;gap:7px;}
+  .logo .dot{width:10px;height:10px;border-radius:50%;background:var(--lime);box-shadow:0 0 0 4px rgba(123,214,73,.25);}
+  .logo small{font-weight:700;font-size:10px;color:var(--slate);}
+  .coins{background:#fff;border-radius:999px;padding:7px 13px;font-weight:800;font-size:14px;color:var(--gold);box-shadow:var(--shadow);}
+  .coins b{color:var(--ink);}
+  h2.sec{font-size:17px;margin:18px 20px 10px;font-weight:800;}
+  .card{background:var(--surface);border-radius:20px;box-shadow:var(--shadow);padding:18px;margin:0 20px 16px;}
+  .muted{color:var(--slate);}
+  .btn{border:none;border-radius:16px;padding:15px;font-size:15px;font-weight:800;cursor:pointer;width:100%;transition:transform .08s;}
+  .btn:active{transform:scale(.97);}
+  .btn-primary{background:var(--lime);color:#10330a;}
+  .btn-ghost{background:#fff;color:var(--ink);box-shadow:var(--shadow);}
+  .btn-sky{background:var(--sky);color:#fff;} .btn-coral{background:var(--coral);color:#fff;}
+  .row{display:flex;gap:10px;}
+  .chip{display:inline-flex;align-items:center;gap:5px;background:var(--mist);border-radius:999px;padding:6px 11px;font-size:12px;font-weight:700;color:var(--slate);}
+  .chip.green{background:rgba(123,214,73,.18);color:var(--lime-dark);}
+  .chip.sky{background:rgba(61,169,252,.16);color:#1f74c0;}
+  .chip.gold{background:rgba(255,201,60,.22);color:#9a6b00;}
+  .lvlbar{margin:6px 20px 14px;background:linear-gradient(135deg,#8B5CF6,#3DA9FC);border-radius:22px;padding:16px 18px;color:#fff;box-shadow:0 10px 26px rgba(139,92,246,.3);}
+  .lvlbar .top{display:flex;justify-content:space-between;margin-bottom:8px;font-weight:800;}
+  .xpbar{height:9px;border-radius:999px;background:rgba(255,255,255,.28);overflow:hidden;}
+  .xpbar>i{display:block;height:100%;background:#fff;transition:width .5s;}
+  .hero{margin:0 20px 14px;background:linear-gradient(135deg,#7BD649,#4FA52B);border-radius:24px;padding:20px;color:#fff;box-shadow:0 12px 26px rgba(79,165,43,.33);position:relative;overflow:hidden;}
+  .hero h1{font-size:19px;margin:0 0 3px;font-weight:900;} .hero p{margin:0 0 14px;opacity:.92;font-size:13px;}
+  .hero .blob{position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.15);}
+  .roll-btn{background:#fff;color:var(--lime-dark);font-weight:900;border:none;border-radius:16px;padding:15px;width:100%;cursor:pointer;box-shadow:0 6px 16px rgba(0,0,0,.18);font-size:16px;}
+  .roll-btn:active{transform:scale(.97);}
+  .stats{display:flex;gap:10px;margin:0 20px 8px;}
+  .stat{flex:1;background:#fff;border-radius:18px;padding:13px 8px;text-align:center;box-shadow:var(--shadow);}
+  .stat .v{font-size:19px;font-weight:900;} .stat .l{font-size:11px;color:var(--slate);margin-top:2px;font-weight:600;}
+  .stat .v.fire{color:var(--coral);} .stat .v.sky{color:var(--sky);} .stat .v.gold{color:#caa000;}
+  .mtitle{font-size:19px;font-weight:900;margin:8px 0 6px;line-height:1.25;}
+  .mdesc{font-size:14px;color:var(--slate);line-height:1.5;}
+  .mmeta{display:flex;flex-wrap:wrap;gap:8px;margin-top:13px;}
+  .quest{background:#fff;border-radius:18px;box-shadow:var(--shadow);margin:0 20px 12px;padding:15px 16px;}
+  .quest .qh{display:flex;justify-content:space-between;align-items:center;gap:8px;}
+  .qbar{height:8px;border-radius:999px;background:var(--mist);overflow:hidden;margin:10px 0 6px;}
+  .qbar>i{display:block;height:100%;background:var(--lime);}
+  .qfoot{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--slate);}
+  .btn-sm{padding:9px 14px;width:auto;border-radius:12px;font-size:13px;border:none;font-weight:800;cursor:pointer;}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:0 20px;}
+  .cell{aspect-ratio:1;border-radius:18px;background:#fff;box-shadow:var(--shadow);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-size:12px;font-weight:700;color:var(--slate);text-align:center;padding:6px;}
+  .cell .ic{font-size:30px;filter:grayscale(1);opacity:.32;} .cell.got{color:var(--ink);} .cell.got .ic{filter:none;opacity:1;}
+  .rank-row{display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;box-shadow:var(--shadow);margin:0 20px 10px;padding:12px 14px;}
+  .rank-no{width:26px;font-weight:900;text-align:center;color:var(--slate);} .rank-no.top{color:var(--gold);font-size:17px;}
+  .rank-row.me{outline:2px solid var(--lime);}
+  .ava{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#3DA9FC,#7BD649);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;}
+  .rank-val{margin-left:auto;font-weight:800;color:var(--lime-dark);}
+  .seg{display:flex;background:var(--mist);border-radius:14px;padding:4px;margin:0 20px 14px;}
+  .seg button{flex:1;border:none;background:none;padding:9px;border-radius:11px;font-weight:800;font-size:13px;color:var(--slate);cursor:pointer;}
+  .seg button.on{background:#fff;color:var(--ink);box-shadow:var(--shadow);}
+  .nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;height:calc(72px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:rgba(255,255,255,.97);backdrop-filter:blur(8px);border-top:1px solid var(--cloud);display:flex;justify-content:space-around;align-items:center;}
+  .nav button{border:none;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:700;color:var(--slate);cursor:pointer;flex:1;height:100%;}
+  .nav button .ic{font-size:20px;} .nav button.active{color:var(--lime-dark);}
+  .overlay{position:fixed;inset:0;background:rgba(20,23,28,.5);display:none;align-items:flex-end;z-index:30;}
+  .overlay.show{display:flex;}
+  .sheet{background:#fff;width:100%;max-width:480px;margin:0 auto;border-radius:26px 26px 0 0;padding:24px 22px calc(30px + env(safe-area-inset-bottom));animation:up .25s ease;max-height:90%;overflow-y:auto;}
+  @keyframes up{from{transform:translateY(100%);}to{transform:translateY(0);}}
+  .sheet h3{margin:0 0 6px;font-size:18px;font-weight:900;}
+  .reward{text-align:center;}
+  .reward .big{font-size:56px;margin:6px 0;}
+  .reward .line{font-size:16px;font-weight:800;margin:7px 0;}
+  .toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 18px;border-radius:999px;font-size:13px;font-weight:700;opacity:0;transition:opacity .25s;z-index:50;white-space:nowrap;max-width:90%;}
+  .toast.show{opacity:1;}
+  .splash{position:fixed;inset:0;background:linear-gradient(135deg,#7BD649,#4FA52B);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;z-index:60;gap:14px;}
+  .splash .mark{font-size:44px;font-weight:900;letter-spacing:1px;}
+  .spinner{width:34px;height:34px;border:4px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .install{margin:0 20px 14px;background:#fff;border:1px dashed var(--lime);border-radius:16px;padding:12px 14px;display:none;align-items:center;justify-content:space-between;gap:10px;font-size:13px;font-weight:700;}
+  .install.show{display:flex;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="screen" id="screen"></div>
+  <nav class="nav" id="nav">
+    <button data-tab="home" class="active"><span class="ic">🏠</span>홈</button>
+    <button data-tab="quests"><span class="ic">📜</span>퀘스트</button>
+    <button data-tab="rank"><span class="ic">🏆</span>랭킹</button>
+    <button data-tab="profile"><span class="ic">👤</span>프로필</button>
+  </nav>
+  <div class="overlay" id="overlay"><div class="sheet" id="sheet"></div></div>
+  <div class="toast" id="toast"></div>
+  <div class="splash" id="splash"><div class="mark">WIGO ◍</div><div class="spinner"></div><div style="opacity:.9;font-size:13px">모험을 준비하는 중...</div></div>
+</div>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const SUPABASE_URL = 'https://zykyraorkcpekzlzrmrl.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_3tXjM0NhMlGe6j6Bfu_b2w_LmTFj6Yb';
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
+
+const BADGE_ICON = { first_step:'👟', streak_7:'🔥', streak_30:'📅', walker_10k:'🏅', walker_100k:'🥇',
+  explorer:'🧭', observer:'👁️', night_walker:'🌇', early_bird:'🌅', park_master:'🌳', cafe_hopper:'☕',
+  level_10:'⭐', social:'🤝', weekly_hero:'🏆', collector:'📦' };
+const TYPE_EMOJI = { distance:'🚶', visit:'📍', observe:'👀' };
+const TYPE_LABEL = { distance:'거리', visit:'방문', observe:'관찰' };
+const DIFF_LABEL = { EASY:'쉬움', NORMAL:'보통', HARD:'어려움' };
+
+let S = { profile:null, tab:'home', rankScope:'friends', freeRerolls:2, pending:null, deferredPrompt:null };
+const $ = id => document.getElementById(id);
+const screen = $('screen');
+const xpForLevel = L => Math.round(80 * Math.pow(Math.max(L,1), 1.5));
+function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2000); }
+function openSheet(h){ $('sheet').innerHTML=h; $('overlay').classList.add('show'); }
+function closeSheet(){ $('overlay').classList.remove('show'); }
+$('overlay').addEventListener('click', e => { if(e.target.id==='overlay') closeSheet(); });
+
+// ---------- 부팅: 익명 로그인 + 프로필 ----------
+async function boot(){
+  try {
+    let { data:{ session } } = await sb.auth.getSession();
+    if(!session){
+      const { error } = await sb.auth.signInAnonymously();
+      if(error) throw error;
+    }
+    await loadProfile();
+    $('splash').style.display='none';
+    render();
+    setupNav();
+  } catch(e){
+    $('splash').innerHTML = '<div style="padding:24px;text-align:center"><div class="mark">WIGO</div><p>로그인에 실패했어요.<br>대시보드에서 <b>Anonymous sign-ins</b>가 켜져 있는지 확인해주세요.</p><pre style="font-size:11px;opacity:.8">'+ (e.message||e) +'</pre></div>';
+  }
+}
+async function loadProfile(){
+  const uid = (await sb.auth.getUser()).data.user.id;
+  let { data } = await sb.from('profiles').select('*').eq('id', uid).maybeSingle();
+  if(!data){ // 트리거 지연 대비 재시도
+    await new Promise(r=>setTimeout(r,800));
+    ({ data } = await sb.from('profiles').select('*').eq('id', uid).maybeSingle());
+  }
+  S.profile = data || { id:uid, nickname:'walker', level:1, xp:0, coins:0, total_distance_m:0, total_missions:0, current_streak:0 };
+}
+
+// ---------- 위치 ----------
+function getPos(){
+  return new Promise((resolve)=>{
+    if(!navigator.geolocation) return resolve({lat:37.5665,lng:126.9780});
+    navigator.geolocation.getCurrentPosition(
+      p=>resolve({lat:p.coords.latitude,lng:p.coords.longitude}),
+      ()=>{ toast('위치 권한이 없어 기본 위치(서울)로 진행해요'); resolve({lat:37.5665,lng:126.9780}); },
+      { enableHighAccuracy:true, timeout:8000 }
+    );
+  });
+}
+
+// ---------- 네비 ----------
+function setupNav(){
+  document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{ S.tab=b.dataset.tab; document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('active',x===b)); screen.scrollTop=0; render(); });
+}
+function render(){
+  if(S.tab==='home') return renderHome();
+  if(S.tab==='quests') return renderQuests();
+  if(S.tab==='rank') return renderRank();
+  if(S.tab==='profile') return renderProfile();
+}
+
+// ---------- 홈 ----------
+function renderHome(){
+  const p=S.profile, need=xpForLevel(p.level), pct=Math.min(Math.round(p.xp/need*100),100);
+  screen.innerHTML = `
+  <div class="topbar"><div class="logo"><span class="dot"></span>WIGO <small>Walk Your Adventure</small></div><div class="coins">🪙 <b>${p.coins}</b></div></div>
+  <div class="install" id="installBar">📲 홈 화면에 WIGO 설치하기 <button class="btn-sm btn-primary" id="installBtn">설치</button></div>
+  <div class="lvlbar"><div class="top"><span>⭐ Lv.${p.level}</span><span>${p.xp} / ${need} XP</span></div><div class="xpbar"><i style="width:${pct}%"></i></div></div>
+  <div class="hero"><div class="blob"></div><h1>오늘의 모험을 시작할까요?</h1><p>버튼을 누르면 위치 기반 랜덤 미션이 생성돼요.</p>
+    <button class="roll-btn" id="rollBtn">🎲 미션 받기</button></div>
+  <div class="stats">
+    <div class="stat"><div class="v fire">${p.current_streak}🔥</div><div class="l">연속 산책</div></div>
+    <div class="stat"><div class="v sky">${(p.total_distance_m/1000).toFixed(1)}km</div><div class="l">누적 거리</div></div>
+    <div class="stat"><div class="v gold">${p.total_missions}</div><div class="l">완료 미션</div></div>
+  </div>
+  <h2 class="sec">진행 중 미션</h2><div id="activeWrap"><div class="card muted" style="text-align:center">불러오는 중...</div></div>`;
+  $('rollBtn').onclick = roll;
+  // 설치 버튼
+  if(S.deferredPrompt){ $('installBar').classList.add('show'); $('installBtn').onclick = doInstall; }
+  loadActive();
+}
+async function loadActive(){
+  const uid=S.profile.id;
+  const { data } = await sb.from('user_missions').select('*, mission_templates(*)').eq('user_id',uid).in('status',['accepted','in_progress']).order('started_at',{ascending:false});
+  const wrap=$('activeWrap'); if(!wrap) return;
+  if(!data || !data.length){ wrap.innerHTML=`<div class="card muted" style="text-align:center">진행 중인 미션이 없어요.<br>위에서 미션을 받아보세요! 🎲</div>`; return; }
+  wrap.innerHTML = data.map(m=>{ const t=m.mission_templates||{}; return `<div class="card" style="border:2px solid var(--lime)">
+    <div style="font-weight:800;color:var(--lime-dark);font-size:12px">${TYPE_EMOJI[t.type]||''} ${TYPE_LABEL[t.type]||''}</div>
+    <div class="mtitle" style="font-size:17px">${t.title||'미션'}</div><div class="mdesc">${t.description||''}</div>
+    <div class="row" style="margin-top:10px"><button class="btn btn-primary" data-id="${m.id}" data-type="${t.type}" data-target="${t.target_value||0}">✅ 완료하기</button></div></div>`; }).join('');
+  wrap.querySelectorAll('button[data-id]').forEach(b=> b.onclick=()=> completeMission(b.dataset.id, b.dataset.type, Number(b.dataset.target)));
+}
+
+// ---------- 미션 받기 ----------
+async function roll(){
+  const btn=$('rollBtn'); if(btn){ btn.disabled=true; btn.textContent='🎲 미션 생성 중...'; }
+  try{
+    const pos=await getPos();
+    const { data, error } = await sb.functions.invoke('generate-mission',{ body:{ lat:pos.lat, lng:pos.lng } });
+    if(error) throw error;
+    if(!data || data.success!==true){ toast(errMsg(data&&data.error)); return; }
+    S.pending=data; showPreview(data);
+  }catch(e){ toast('오류: '+(e.message||e)); }
+  finally{ if(btn){ btn.disabled=false; btn.textContent='🎲 미션 받기'; } }
+}
+function showPreview(d){
+  const t=d.template;
+  openSheet(`<div class="row" style="justify-content:space-between"><span class="chip green">${TYPE_EMOJI[t.type]} ${TYPE_LABEL[t.type]}</span><span class="chip ${t.difficulty==='HARD'?'gold':t.difficulty==='EASY'?'green':'sky'}">⚡ ${DIFF_LABEL[t.difficulty]}</span></div>
+    <div class="mtitle">${t.title}</div><div class="mdesc">${t.description}</div>
+    <div class="card" style="margin:16px 0 6px;background:var(--mist);box-shadow:none">완료 보상 &nbsp; ✨ +${t.xp_reward} XP &nbsp; 🪙 +${t.coin_reward}</div>
+    <button class="btn btn-primary" id="acceptBtn">⚔️ 미션 수락</button>
+    <button class="btn btn-ghost" id="rerollBtn" style="margin-top:10px">🎲 다시 받기 (무료 ${S.freeRerolls}회)</button>`);
+  $('acceptBtn').onclick=()=>{ closeSheet(); S.tab='home'; render(); toast('미션 수락! 산책을 시작해요 🚶'); };
+  $('rerollBtn').onclick=async ()=>{
+    if(S.freeRerolls<=0){ toast('무료 다시받기를 모두 썼어요 (광고는 앱 버전에서)'); return; }
+    S.freeRerolls--;
+    await sb.from('user_missions').update({status:'abandoned'}).eq('id', d.user_mission.id);
+    closeSheet(); roll();
+  };
+}
+
+// ---------- 완료 + 보상 ----------
+async function completeMission(id, type, target){
+  try{
+    const pos=await getPos();
+    const body={ user_mission_id:id, lat:pos.lat, lng:pos.lng };
+    if(type==='distance') body.distance_m = target;       // 웹 데모: 목표 거리 충족 처리
+    if(type==='observe') body.proof_url = 'honor://web-demo';
+    const { data, error } = await sb.functions.invoke('complete-mission',{ body });
+    if(error) throw error;
+    if(!data || data.success!==true){ toast(errMsg(data&&data.error, data&&data.distance_to_target_m)); return; }
+    await loadProfile();
+    showReward(data);
+  }catch(e){ toast('오류: '+(e.message||e)); }
+}
+function showReward(d){
+  const r=d.rewards||{}; const lvl=d.level_up; const badges=(d.new_badges||[]).map(b=>b.name);
+  openSheet(`<div class="reward"><div class="big">${lvl?'🎊':'🎉'}</div>
+    <h3 style="font-size:22px">${lvl?('레벨 업! Lv.'+lvl.to):'미션 완료!'}</h3>
+    <div class="line">✨ +${r.xp||0} XP</div><div class="line">🪙 +${r.coins||0} 코인</div>
+    ${badges.map(b=>`<div class="line" style="color:var(--lime-dark)">🏅 새 뱃지 「${b}」</div>`).join('')}
+    <button class="btn btn-primary" style="margin-top:16px" id="rewardOk">확인</button></div>`);
+  $('rewardOk').onclick=()=>{ closeSheet(); S.tab='home'; render(); };
+}
+
+// ---------- 퀘스트 ----------
+async function renderQuests(){
+  screen.innerHTML=`<div class="topbar"><div class="logo"><span class="dot"></span>퀘스트</div><div class="coins">🪙 <b>${S.profile.coins}</b></div></div>
+    <div id="qd"></div>`;
+  const wrap=$('qd');
+  for(const period of ['daily','weekly']){
+    try{ await sb.functions.invoke('issue-quests',{ body:{ period } }); }catch(e){}
+  }
+  const uid=S.profile.id;
+  const { data } = await sb.from('quests').select('*').eq('user_id',uid).gt('expires_at', new Date().toISOString()).order('period');
+  if(!wrap) return;
+  const daily=(data||[]).filter(q=>q.period==='daily'), weekly=(data||[]).filter(q=>q.period==='weekly');
+  wrap.innerHTML = `<h2 class="sec">📅 데일리</h2>${daily.map(questCard).join('')||emptyQ()}<h2 class="sec">🗓️ 위클리</h2>${weekly.map(questCard).join('')||emptyQ()}`;
+  wrap.querySelectorAll('button[data-q]').forEach(b=> b.onclick=()=>claim(b.dataset.q));
+}
+function emptyQ(){ return `<div class="card muted" style="text-align:center">퀘스트가 없어요</div>`; }
+function questCard(q){
+  const pct=Math.min(Math.round(q.progress/q.goal_value*100),100);
+  const done=q.progress>=q.goal_value;
+  const title = q.goal_type==='complete_missions'?`미션 ${q.goal_value}개 완료`:(q.goal_type==='walk_distance'?`${(q.goal_value/1000).toFixed(0)}km 걷기`:q.goal_type);
+  const fmt=v=> q.goal_type==='walk_distance' ? (v>=1000?(v/1000).toFixed(1)+'km':v+'m') : v;
+  let tail;
+  if(q.claimed) tail=`<span class="chip green">수령 완료 ✓</span>`;
+  else if(done) tail=`<button class="btn-sm btn-primary" data-q="${q.id}">보상 받기</button>`;
+  else tail=`<span class="chip">진행 중</span>`;
+  return `<div class="quest"><div class="qh"><div style="font-weight:800">${title}</div><div style="font-size:12px;font-weight:800;color:var(--lime-dark)">✨${q.xp_reward} 🪙${q.coin_reward}</div></div>
+    <div class="qbar"><i style="width:${pct}%"></i></div>
+    <div class="qfoot"><span>${fmt(q.progress)} / ${fmt(q.goal_value)}</span>${tail}</div></div>`;
+}
+async function claim(qid){
+  try{
+    const { data, error } = await sb.functions.invoke('claim-quest',{ body:{ quest_id:qid } });
+    if(error) throw error;
+    if(!data || data.success!==true){ toast('아직 수령할 수 없어요'); return; }
+    await loadProfile();
+    toast(`보상 수령! ✨${data.rewards.xp} 🪙${data.rewards.coins}`);
+    renderQuests();
+  }catch(e){ toast('오류: '+(e.message||e)); }
+}
+
+// ---------- 랭킹 ----------
+function seasonWeek(){ const n=new Date(); const d=Math.ceil((((n-new Date(n.getFullYear(),0,1))/86400000)+1)/7); return `${n.getFullYear()}-W${String(d).padStart(2,'0')}`; }
+async function renderRank(){
+  screen.innerHTML=`<div class="topbar"><div class="logo"><span class="dot"></span>랭킹</div><div class="coins">🪙 <b>${S.profile.coins}</b></div></div>
+    <div class="seg"><button class="${S.rankScope==='friends'?'on':''}" id="sf">친구</button><button class="${S.rankScope==='all'?'on':''}" id="sa">전체</button></div>
+    <div style="text-align:center;font-size:12px;color:var(--slate);margin-bottom:8px">🏆 이번 주 시즌 · 주간 XP 기준</div><div id="rk"></div>`;
+  $('sf').onclick=()=>{ S.rankScope='friends'; renderRank(); };
+  $('sa').onclick=()=>{ S.rankScope='all'; renderRank(); };
+  const { data } = await sb.from('leaderboard_public').select('*').eq('season_week', seasonWeek()).order('rank',{ascending:true}).limit(50);
+  const rk=$('rk'); if(!rk) return;
+  let list=data||[];
+  if(S.rankScope==='friends') list=list.filter(e=>e.user_id===S.profile.id); // 친구 데이터 없으면 본인만
+  if(!list.length){ rk.innerHTML=`<div class="card muted" style="text-align:center">아직 이번 주 랭킹 기록이 없어요.<br>미션을 완료하면 등록돼요!</div>`; return; }
+  rk.innerHTML=list.map(e=>`<div class="rank-row ${e.user_id===S.profile.id?'me':''}"><div class="rank-no ${e.rank<=3?'top':''}">${['🥇','🥈','🥉'][e.rank-1]||e.rank}</div>
+    <div class="ava">${(e.nickname||'?')[0]}</div><div style="font-weight:800">${e.nickname||'익명'} <span class="chip" style="font-size:10px">Lv.${e.level}</span></div>
+    <div class="rank-val">${e.weekly_xp} XP</div></div>`).join('');
+}
+
+// ---------- 프로필 ----------
+async function renderProfile(){
+  const p=S.profile, need=xpForLevel(p.level), pct=Math.min(Math.round(p.xp/need*100),100);
+  screen.innerHTML=`<div class="topbar"><div class="logo"><span class="dot"></span>프로필</div><div class="coins">🪙 <b>${p.coins}</b></div></div>
+    <div class="card" style="text-align:center"><div class="ava" style="width:80px;height:80px;margin:0 auto 10px;font-size:36px">⚔️</div>
+      <div style="font-weight:900;font-size:18px">${p.nickname||'산책 모험가'}</div>
+      <div class="chip green" style="margin-top:6px">⭐ Lv.${p.level} · 동네 탐험가</div>
+      <div class="xpbar" style="background:var(--mist);margin:12px 20px 4px"><i style="width:${pct}%;background:var(--lime)"></i></div>
+      <div class="muted" style="font-size:12px">다음 레벨까지 ${need-p.xp} XP</div></div>
+    <div class="stats"><div class="stat"><div class="v fire">${p.current_streak}🔥</div><div class="l">연속 산책</div></div>
+      <div class="stat"><div class="v sky">${(p.total_distance_m/1000).toFixed(1)}km</div><div class="l">누적 거리</div></div>
+      <div class="stat"><div class="v gold">${p.total_missions}</div><div class="l">완료 미션</div></div></div>
+    <h2 class="sec">획득 뱃지 🏅</h2><div class="grid" id="badges"><div class="muted">불러오는 중...</div></div>
+    <div style="padding:0 20px;margin-top:14px"><button class="btn btn-ghost" id="signout" style="color:var(--coral)">로그아웃</button></div>
+    <div style="text-align:center;font-size:11px;color:var(--slate);padding:14px">WIGO PWA · Live Backend 연결됨</div>`;
+  $('signout').onclick=async ()=>{ await sb.auth.signOut(); location.reload(); };
+  const all=(await sb.from('badges').select('*')).data||[];
+  const mine=new Set(((await sb.from('user_badges').select('badge_id').eq('user_id',p.id)).data||[]).map(r=>r.badge_id));
+  const g=$('badges'); if(!g) return;
+  g.innerHTML=all.map(b=>{ const got=mine.has(b.id); return `<div class="cell ${got?'got':''}"><div class="ic">${BADGE_ICON[b.code]||'🏅'}</div><div>${got?b.name:'???'}</div></div>`; }).join('');
+}
+
+function errMsg(code, dist){
+  const m={ TOO_MANY_ACTIVE:'진행 중 미션이 너무 많아요', NO_TEMPLATE:'지금 가능한 미션이 없어요',
+    LOCATION_NOT_REACHED:`목표까지 ${dist||0}m 남았어요`, MISSION_EXPIRED:'미션이 만료됐어요',
+    ALREADY_COMPLETED:'이미 완료했어요', UNAUTHENTICATED:'로그인이 필요해요' };
+  return m[code]||('오류'+(code?' ('+code+')':''));
+}
+
+// ---------- PWA: 서비스워커 + 설치 ----------
+if('serviceWorker' in navigator){ window.addEventListener('load',()=> navigator.serviceWorker.register('./sw.js').catch(()=>{})); }
+window.addEventListener('beforeinstallprompt',(e)=>{ e.preventDefault(); S.deferredPrompt=e; const bar=$('installBar'); if(bar){ bar.classList.add('show'); const btn=$('installBtn'); if(btn) btn.onclick=doInstall; } });
+async function doInstall(){ if(!S.deferredPrompt) return; S.deferredPrompt.prompt(); await S.deferredPrompt.userChoice; S.deferredPrompt=null; const bar=$('installBar'); if(bar) bar.classList.remove('show'); }
+
+boot();
+</script>
+</body>
+</html>

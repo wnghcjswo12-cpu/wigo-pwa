@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7BD649"/>
+      <stop offset="1" stop-color="#4FA52B"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#g)"/>
+  <!-- 나침반/핀 모티프 -->
+  <circle cx="256" cy="232" r="118" fill="none" stroke="#ffffff" stroke-width="20" opacity="0.95"/>
+  <polygon points="256,150 292,250 256,228 220,250" fill="#ffffff"/>
+  <polygon points="256,314 220,214 256,236 292,214" fill="#ffffff" opacity="0.55"/>
+  <circle cx="256" cy="232" r="14" fill="#10330A"/>
+  <text x="256" y="438" text-anchor="middle" font-family="Arial, 'Noto Sans KR', sans-serif" font-size="92" font-weight="900" fill="#ffffff" letter-spacing="2">WIGO</text>
+</svg>
