@@ -699,12 +699,23 @@ async function loadAuthState(){
 }
 async function linkGoogle(){
   try{
-    // 게스트면 기존 기록 보존을 위해 identity 연결, 아니면 일반 로그인
-    const opts={ options:{ redirectTo: location.href } };
-    const fn = S.isAnon ? sb.auth.linkIdentity : sb.auth.signInWithOAuth;
-    const { error } = await fn.call(sb.auth, S.isAnon ? { provider:'google', ...opts } : { provider:'google', ...opts });
-    if(error) throw error;
-  }catch(e){ toast('Google 연결 설정이 필요해요: '+(e.message||e)); }
+    const redirectTo = location.origin + location.pathname;
+    let err;
+    if(S.isAnon){
+      ({ error: err } = await sb.auth.linkIdentity({ provider:'google', options:{ redirectTo } }));
+    } else {
+      ({ error: err } = await sb.auth.signInWithOAuth({ provider:'google', options:{ redirectTo } }));
+    }
+    if(err) throw err;
+  }catch(e){
+    const msg = e.message||String(e);
+    if(msg.toLowerCase().includes('not enabled')||msg.toLowerCase().includes('provider'))
+      toast('Supabase 대시보드에서 Google 로그인을 활성화해주세요');
+    else if(msg.toLowerCase().includes('redirect'))
+      toast('Supabase Redirect URL 등록이 필요해요 (대시보드 확인)');
+    else
+      toast('Google 연결 오류: '+msg);
+  }
 }
 
 // ===== PWA =====
