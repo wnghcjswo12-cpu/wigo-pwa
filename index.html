@@ -250,7 +250,7 @@ const DIFF_STARS = { EASY:'★☆☆', NORMAL:'★★☆', HARD:'★★★' };
 
 let S = { profile:null, tab:'home', rankScope:'friends', freeRerolls:2, pending:null, deferredPrompt:null,
           attendance:new Set(), streak:0, calMonth:0,
-          todaySteps:0, stepActive:false, stepClaimed:0, isAnon:true, email:null };
+          todaySteps:0, stepActive:false, stepClaimed:0, isAnon:true, email:null, pedConsented:false };
 const STRIDE_M = 0.7;            // 걸음당 거리(m) 추정
 const STEP_REWARD_COIN = 15;     // 1000걸음당 코인
 const $ = id => document.getElementById(id);
@@ -295,6 +295,9 @@ async function boot(){
     let { data:{ session } } = await sb.auth.getSession();
     if(!session){ const { error } = await sb.auth.signInAnonymously(); if(error) throw error; }
     await loadProfile(); await computeAttendance(); await loadAuthState(); loadStepsLocal();
+    if(localStorage.getItem('wigo_ped_consent_'+(S.profile?S.profile.id:'x'))==='1'){
+      S.pedConsented=true; startPedometer().catch(()=>{});
+    }
     $('splash').style.display='none'; setupNav(); wireCamera(); render();
   }catch(e){
     $('splash').innerHTML='<div style="padding:24px;text-align:center"><div class="mk">WIGO</div><p style="margin-top:10px">로그인 실패. 대시보드에서 <b>Anonymous sign-ins</b>를 켜주세요.</p><pre style="font-size:11px;opacity:.8">'+(e.message||e)+'</pre></div>';
@@ -312,9 +315,7 @@ function localKey(){ return 'wigo_attend_'+(S.profile?S.profile.id:'x'); }
 function localAttend(){ try{ return new Set(JSON.parse(localStorage.getItem(localKey())||'[]')); }catch{ return new Set(); } }
 function saveLocalAttend(s){ localStorage.setItem(localKey(), JSON.stringify([...s])); }
 async function computeAttendance(){
-  const uid=S.profile.id;
-  const { data }=await sb.from('user_missions').select('completed_at').eq('user_id',uid).eq('status','completed').not('completed_at','is',null);
-  const set=localAttend(); (data||[]).forEach(r=>{ if(r.completed_at) set.add(r.completed_at.slice(0,10)); });
+  const set=localAttend();
   S.attendance=set; computeStreakLocal();
 }
 function computeStreakLocal(){ let s=0; const d=new Date(); if(!S.attendance.has(ymd(d))) d.setDate(d.getDate()-1); while(S.attendance.has(ymd(d))){ s++; d.setDate(d.getDate()-1);} S.streak=s; }
@@ -323,7 +324,7 @@ function checkInToday(){ const s=localAttend(),t=ymd(new Date()); if(s.has(t)) r
 // ===== 네비 =====
 function setupNav(){ document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{ S.tab=b.dataset.tab; navActive(b.dataset.tab); screen.scrollTop=0; render(); }); }
 function navActive(tab){ document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('active',x.dataset.tab===tab)); }
-function render(){ ({home:renderHome,quests:renderQuests,rank:renderRank,profile:renderProfile,attendance:renderAttendance}[S.tab]||renderHome)(); }
+function render(){ ({home:renderHome,quests:renderQuests,rank:renderRank,profile:renderProfile,attendance:renderAttendance,completed:renderCompletedMissions}[S.tab]||renderHome)(); }
 
 // ===== 홈 =====
 function renderHome(){
@@ -336,16 +337,15 @@ function renderHome(){
   <div class="install" id="installBar">📲 홈 화면에 WIGO 설치하기 <button class="btn pri sm" id="installBtn">설치</button></div>
   <div class="lvl"><div class="r"><span class="lab">⭐ Lv.${p.level}</span><span>${p.xp} / ${need} XP</span></div>
     <div class="xpbar"><i style="width:${pct}%"></i></div><div class="need">다음 레벨까지 ${need-p.xp} XP</div></div>
-  <div class="hero"><span class="dice">🎲</span><h3>오늘의 미션을<br>굴려보세요!</h3><button class="roll" id="rollBtn">🎲 미션 굴리기</button></div>
+  <div id="missionHero"><div class="hero" style="opacity:.55"><span class="dice" style="animation:none">🎲</span><h3>미션 불러오는 중...</h3></div></div>
   <div id="stepCard"></div>
   <div class="summary">
     <button class="stat tap" id="streakStat"><div class="val fire">${S.streak}일</div><div class="lab">🔥 연속 산책</div></button>
     <div class="stat"><div class="val sky">${(p.total_distance_m/1000).toFixed(1)}km</div><div class="lab">누적 거리</div></div>
-    <div class="stat"><div class="val gold">${p.total_missions}</div><div class="lab">완료 미션</div></div>
-  </div>
-  <h2 class="sec">진행중 미션</h2><div id="activeWrap"><div class="card prog muted" style="text-align:center;padding:20px">불러오는 중...</div></div>`;
-  $('rollBtn').onclick=roll;
+    <button class="stat tap" id="compStat"><div class="val gold">${p.total_missions}</div><div class="lab">완료 미션</div></button>
+  </div>`;
   $('streakStat').onclick=()=>{ S.tab='attendance'; S.calMonth=0; navActive('home'); render(); };
+  $('compStat').onclick=()=>{ S.tab='completed'; navActive('home'); render(); };
   if(S.deferredPrompt){ $('installBar').classList.add('show'); $('installBtn').onclick=doInstall; }
   renderStepCard();
   loadActive();
@@ -353,13 +353,19 @@ function renderHome(){
 async function loadActive(){
   const uid=S.profile.id;
   const { data }=await sb.from('user_missions').select('*, mission_templates(*)').eq('user_id',uid).in('status',['accepted','in_progress']).order('started_at',{ascending:false});
-  const wrap=$('activeWrap'); if(!wrap) return;
-  if(!data||!data.length){ wrap.innerHTML=`<div class="card prog muted" style="text-align:center;padding:22px">진행 중인 미션이 없어요.<br>위에서 미션을 굴려보세요! 🎲</div>`; return; }
-  wrap.innerHTML=data.map(m=>{ const t=m.mission_templates||{}; const meta=JSON.stringify(t.target_meta||{}).replace(/"/g,'&quot;'); const obs=t.type==='observe';
+  const hero=$('missionHero'); if(!hero) return;
+  if(!data||!data.length){
+    hero.innerHTML=`<div class="hero"><span class="dice">🎲</span><h3>오늘의 미션을<br>굴려보세요!</h3><button class="roll" id="rollBtn">🎲 미션 굴리기</button></div>`;
+    $('rollBtn').onclick=roll;
+    return;
+  }
+  hero.innerHTML=`<h2 class="sec">오늘의 미션</h2>`+data.map(m=>{
+    const t=m.mission_templates||{}; const meta=JSON.stringify(t.target_meta||{}).replace(/"/g,'&quot;'); const obs=t.type==='observe';
     return `<div class="card prog"><div class="pt"><span class="nm">${TYPE_EMOJI[t.type]||''} ${t.title||'미션'}</span><span class="chip ${t.difficulty==='HARD'?'gold':t.difficulty==='EASY'?'green':'sky'}">⚡ ${DIFF_LABEL[t.difficulty]||''}</span></div>
       <div class="ds">${t.description||''}</div>
-      <button class="btn ${obs?'coral':'pri'}" data-id="${m.id}" data-type="${t.type}" data-target="${t.target_value||0}" data-meta="${meta}">${obs?'📷 사진 찍어 인증하기':'✅ 완료하기'}</button></div>`; }).join('');
-  wrap.querySelectorAll('button[data-id]').forEach(b=> b.onclick=()=>{ const id=b.dataset.id,type=b.dataset.type,target=Number(b.dataset.target); let meta={}; try{meta=JSON.parse(b.dataset.meta);}catch(e){} if(type==='observe') startObserve(id,target,meta); else completeMission(id,type,target); });
+      <button class="btn ${obs?'coral':'pri'}" data-id="${m.id}" data-type="${t.type}" data-target="${t.target_value||0}" data-meta="${meta}">${obs?'📷 사진 찍어 인증하기':'✅ 완료하기'}</button></div>`;
+  }).join('');
+  hero.querySelectorAll('button[data-id]').forEach(b=> b.onclick=()=>{ const id=b.dataset.id,type=b.dataset.type,target=Number(b.dataset.target); let meta={}; try{meta=JSON.parse(b.dataset.meta);}catch(e){} if(type==='observe') startObserve(id,target,meta); else completeMission(id,type,target); });
 }
 
 // ===== 미션 받기 =====
@@ -465,10 +471,12 @@ function questCard(q){
     <div class="qf"><span>${fmt(q.progress)} / ${fmt(q.goal_value)}</span>${tail}</div></div>`;
 }
 async function claim(qid){
+  const btn=document.querySelector(`button[data-q="${qid}"]`);
+  if(btn){ btn.disabled=true; btn.textContent='처리 중...'; }
   try{ const { data,error }=await sb.functions.invoke('claim-quest',{ body:{ quest_id:qid } }); if(error) throw error;
-    if(!data||data.success!==true){ toast('아직 수령할 수 없어요'); return; }
+    if(!data||data.success!==true){ toast('아직 수령할 수 없어요'); if(btn){btn.disabled=false;btn.textContent='보상 받기';} return; }
     await loadProfile(); toast(`보상 적립! ✨${data.rewards.xp} 🪙${data.rewards.coins}`); renderQuests();
-  }catch(e){ toast('오류: '+(e.message||e)); }
+  }catch(e){ toast('오류: '+(e.message||e)); if(btn){btn.disabled=false;btn.textContent='보상 받기';} }
 }
 function stepRewardCard(){
   const blocks=Math.floor(S.todaySteps/1000);
@@ -517,12 +525,38 @@ function renderAttendance(){
       <div class="cal">${['일','월','화','수','목','금','토'].map(w=>`<div class="wd">${w}</div>`).join('')}${cells}</div>
       <div class="legend"><span class="da"></span> 출석한 날 (주황 원)</div>
     </div>
-    <button class="btn ${todayAtt?'sec':'pri'}" id="checkBtn" ${todayAtt?'disabled':''}>${todayAtt?'오늘 출석 완료 ✓':'오늘 출석하기'}</button>
-    <div class="muted" style="font-size:12px;text-align:center;margin-top:8px">미션을 완료한 날도 자동으로 출석 처리돼요</div>`;
+    <button class="btn ${todayAtt?'sec':'pri'}" id="checkBtn" ${todayAtt?'disabled':''}>${todayAtt?'오늘 출석 완료 ✓':'📅 출석하기'}</button>`;
   $('attBack').onclick=()=>{ S.tab='home'; render(); };
   $('prevMo').onclick=()=>{ S.calMonth--; renderAttendance(); };
   $('nextMo').onclick=()=>{ S.calMonth++; renderAttendance(); };
   $('checkBtn').onclick=()=>{ if(checkInToday()){ toast('오늘 출석 완료! 🔥'); renderAttendance(); } };
+}
+
+// ===== 완료 미션 =====
+async function renderCompletedMissions(){
+  screen.innerHTML=`<div class="top"><button class="backbtn" id="compBack">‹ 뒤로</button><div class="brand" style="font-size:17px">완료 미션</div><div style="width:54px"></div></div>
+    <div id="compList"><div class="card prog muted" style="text-align:center;padding:22px">불러오는 중...</div></div>`;
+  $('compBack').onclick=()=>{ S.tab='home'; navActive('home'); render(); };
+  const uid=S.profile.id;
+  const since=new Date(); since.setDate(since.getDate()-10);
+  const { data }=await sb.from('user_missions').select('*, mission_templates(*)').eq('user_id',uid).eq('status','completed').gte('completed_at',since.toISOString()).order('completed_at',{ascending:false});
+  // 10일 이전 완료 데이터 삭제
+  try{ await sb.from('user_missions').delete().eq('user_id',uid).eq('status','completed').lt('completed_at',since.toISOString()); }catch(e){}
+  const list=$('compList'); if(!list) return;
+  if(!data||!data.length){ list.innerHTML=`<div class="card prog muted" style="text-align:center;padding:26px">완료한 미션이 없어요.<br>첫 번째 미션을 완료해 보세요! 🏅</div>`; return; }
+  const byDate={};
+  data.forEach(m=>{ const d=(m.completed_at||'').slice(0,10); if(!byDate[d]) byDate[d]=[]; byDate[d].push(m); });
+  const today=ymd(new Date()); const yesterday=ymd(new Date(Date.now()-86400000));
+  const dateLabel=d=> d===today?'오늘': d===yesterday?'어제': d.slice(5).replace('-','월 ')+'일';
+  list.innerHTML=Object.keys(byDate).sort().reverse().map(d=>{
+    const items=byDate[d].map(m=>{ const t=m.mission_templates||{};
+      return `<div class="card" style="padding:13px 15px;margin-bottom:8px;display:flex;align-items:center;gap:11px">
+        <span style="font-size:24px">${TYPE_EMOJI[t.type]||'🎯'}</span>
+        <div style="flex:1"><div style="font-weight:800;font-size:13.5px">${t.title||'미션'}</div>
+          <div style="font-size:11px;color:var(--slate);margin-top:2px">${DIFF_LABEL[t.difficulty]||''} · ✨${m.xp_earned||0} XP · 🪙${m.coins_earned||0}</div></div>
+        <span class="chip green">✅</span></div>`;}).join('');
+    return `<h2 class="sec">${dateLabel(d)} <span class="muted" style="font-weight:600;font-size:11.5px">${d}</span></h2>${items}`;
+  }).join('');
 }
 
 // ===== 랭킹 =====
@@ -558,16 +592,16 @@ async function renderProfile(){
     <div class="p3"><div class="c"><div class="v">${p.total_missions}</div><div class="l">완료 미션</div></div>
       <div class="c"><div class="v" id="badgeCnt">–</div><div class="l">획득 뱃지</div></div>
       <div class="c"><div class="v">${p.coins}</div><div class="l">코인</div></div></div>
-    <div class="card" style="padding:14px 16px">
-      ${S.isAnon
-        ? `<div style="font-weight:800;font-size:14px">게스트로 이용 중 👤</div>
-           <div class="muted" style="font-size:12px;margin:4px 0 11px">Google 계정을 연결하면 기록이 <b>영구 저장</b>되고 다른 기기에서도 이어서 사용할 수 있어요.</div>
-           <button class="btn pri" id="googleBtn">🔗 Google 계정으로 가입/연결</button>`
-        : `<div style="font-weight:800;font-size:14px">✅ ${S.email||'연결된 계정'}</div>
-           <div class="muted" style="font-size:12px;margin-top:4px">기록이 계정에 안전하게 저장됩니다.</div>`}
-    </div>
+    ${S.isAnon?`<div class="card" style="padding:14px 16px;margin-top:14px">
+      <div style="font-weight:800;font-size:14px">게스트로 이용 중 👤</div>
+      <div class="muted" style="font-size:12px;margin:4px 0 11px">Google 계정을 연결하면 기록이 <b>영구 저장</b>되고 다른 기기에서도 이어서 사용할 수 있어요.</div>
+      <button class="btn pri" id="googleBtn">🔗 Google 계정으로 가입/연결</button></div>`:''}
     <h2 class="sec">🏅 내 뱃지</h2><div class="cgrid" id="badges"><div class="muted">불러오는 중...</div></div>
-    <div style="margin-top:18px;text-align:center;font-size:11px;color:var(--slate)">WIGO PWA · Live Backend 연결됨</div>`;
+    ${!S.isAnon?`<div style="margin-top:14px;background:#f4f6f8;border-radius:13px;padding:10px 14px;display:flex;align-items:center;gap:10px">
+      <span style="font-size:20px">✅</span>
+      <div><div style="font-weight:800;font-size:12px;color:var(--ink)">${S.email||'연결된 계정'}</div>
+        <div style="font-size:11px;color:var(--slate);margin-top:2px">기록이 계정에 안전하게 저장됩니다.</div></div></div>`:''}
+    <div style="margin-top:16px;text-align:center;font-size:11px;color:var(--slate)">WIGO PWA · Live Backend 연결됨</div>`;
   $('signout').onclick=async()=>{ await sb.auth.signOut(); location.reload(); };
   if($('googleBtn')) $('googleBtn').onclick=linkGoogle;
   const all=(await sb.from('badges').select('*')).data||[];
@@ -624,7 +658,7 @@ function renderStepCard(){
       ${S.stepActive?'<span class="live"><span class="ld"></span>측정 중</span>':''}</div>
     ${S.stepActive
       ? (claimable>0?`<button class="pedbtn" id="stepClaimBtn">🎁 걸음 리워드 ${claimable}개 받기</button>`:'')
-      : `<button class="pedbtn" id="pedStart">▶ 만보기 시작</button>`}</div>`;
+      : (!S.pedConsented?`<button class="pedbtn" id="pedStart">▶ 만보기 시작</button>`:'')}</div>`;
   if($('pedStart')) $('pedStart').onclick=startPedometerConsent;
   if($('stepClaimBtn')) $('stepClaimBtn').onclick=()=>{ S.tab='quests'; navActive('quests'); render(); };
 }
@@ -640,7 +674,10 @@ function startPedometerConsent(){
     <button class="btn pri" id="pedAgree">동의하고 시작</button>
     <button class="btn sec" id="pedCancel" style="margin-top:10px">취소</button>`);
   $('pedCancel').onclick=closeSheet;
-  $('pedAgree').onclick=async()=>{ closeSheet(); await startPedometer(); };
+  $('pedAgree').onclick=async()=>{
+    localStorage.setItem('wigo_ped_consent_'+(S.profile?S.profile.id:'x'),'1');
+    S.pedConsented=true; closeSheet(); await startPedometer();
+  };
 }
 async function startPedometer(){
   try{
